@@ -8,6 +8,7 @@ export const config: Config = {
       serviceWorker: null, // disable service workers
     },
   ],
+  globalStyle: 'src/index.css',
   testing: {
     browserHeadless: 'new',
   },
