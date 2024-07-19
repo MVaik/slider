@@ -1,0 +1,14 @@
+{
+  "name": "slider",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "MVaik",
+  "license": "MIT",
+  "dependencies": {
+    "dyo": "^2.0.8"
+  }
+}
