@@ -1,0 +1,10 @@
+.card {
+  box-shadow: 0px 2px 4px 0px #00000040;
+  padding: 10px;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 30px;
+  width: 220px;
+  box-sizing: border-box;
+}

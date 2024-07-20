@@ -2,15 +2,16 @@
 *::before,
 *::after {
   box-sizing: border-box;
-}
-
-* {
   margin: 0;
 }
 
 body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  display: grid;
+  place-items: center;
+  height: 100svh;
+  box-sizing: border-box;
 }
 
 input,

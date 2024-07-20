@@ -6,10 +6,19 @@
  */
 import { HTMLStencilElement, JSXBase } from "@stencil/core/internal";
 export namespace Components {
+    interface DojoCard {
+    }
     interface DojoSlider {
+        "thumbSize": number;
     }
 }
 declare global {
+    interface HTMLDojoCardElement extends Components.DojoCard, HTMLStencilElement {
+    }
+    var HTMLDojoCardElement: {
+        prototype: HTMLDojoCardElement;
+        new (): HTMLDojoCardElement;
+    };
     interface HTMLDojoSliderElement extends Components.DojoSlider, HTMLStencilElement {
     }
     var HTMLDojoSliderElement: {
@@ -17,13 +26,18 @@ declare global {
         new (): HTMLDojoSliderElement;
     };
     interface HTMLElementTagNameMap {
+        "dojo-card": HTMLDojoCardElement;
         "dojo-slider": HTMLDojoSliderElement;
     }
 }
 declare namespace LocalJSX {
+    interface DojoCard {
+    }
     interface DojoSlider {
+        "thumbSize"?: number;
     }
     interface IntrinsicElements {
+        "dojo-card": DojoCard;
         "dojo-slider": DojoSlider;
     }
 }
@@ -31,6 +45,7 @@ export { LocalJSX as JSX };
 declare module "@stencil/core" {
     export namespace JSX {
         interface IntrinsicElements {
+            "dojo-card": LocalJSX.DojoCard & JSXBase.HTMLAttributes<HTMLDojoCardElement>;
             "dojo-slider": LocalJSX.DojoSlider & JSXBase.HTMLAttributes<HTMLDojoSliderElement>;
         }
     }
