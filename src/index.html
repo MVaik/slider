@@ -2,7 +2,10 @@
 <html dir="ltr" lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0"
+    />
     <title>Slider</title>
     <link rel="stylesheet" href="./build/slider.css" />
     <script type="module" src="./build/slider.esm.js"></script>
@@ -10,7 +13,18 @@
   </head>
   <body>
     <dojo-card>
-      <dojo-slider></dojo-slider>
+      <dojo-slider id="first-slider"></dojo-slider>
+      <dojo-slider id="second-slider" type="range"></dojo-slider>
+      <dojo-slider id="third-slider" type="range"></dojo-slider>
+      <dojo-slider value-suffix="%"></dojo-slider>
+      <dojo-slider include-steps="true"></dojo-slider>
+      <dojo-slider include-steps="true" is-vertical="true"></dojo-slider>
     </dojo-card>
+    <script>
+      document.getElementById('first-slider').boundaries = { max: 150 };
+      document.getElementById('second-slider').boundaries = { min: 15, max: 100 };
+      document.getElementById('third-slider').boundaries = { min: 15, max: 100 };
+      document.getElementById('third-slider').defaultValues = [30, 75];
+    </script>
   </body>
 </html>

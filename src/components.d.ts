@@ -9,7 +9,13 @@ export namespace Components {
     interface DojoCard {
     }
     interface DojoSlider {
+        "boundaries": { min: number; max: number };
+        "defaultValues": [number, number];
+        "includeSteps": boolean;
+        "isVertical": boolean;
         "thumbSize": number;
+        "type": 'default' | 'range';
+        "valueSuffix": string;
     }
 }
 declare global {
@@ -34,7 +40,13 @@ declare namespace LocalJSX {
     interface DojoCard {
     }
     interface DojoSlider {
+        "boundaries"?: { min: number; max: number };
+        "defaultValues"?: [number, number];
+        "includeSteps"?: boolean;
+        "isVertical"?: boolean;
         "thumbSize"?: number;
+        "type"?: 'default' | 'range';
+        "valueSuffix"?: string;
     }
     interface IntrinsicElements {
         "dojo-card": DojoCard;

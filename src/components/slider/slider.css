@@ -14,13 +14,14 @@
 
 .input {
   border: 1px solid var(--input-border-color, #e3068c);
-  padding: var(--input-padding, 4px 16px);
+  padding: var(--input-padding, 4px);
   font-size: var(--input-font-size, 0.75rem);
   display: inline-flex;
-  place-items: center;
+  text-align: center;
   border-radius: var(--input-border-radius, 2px);
   box-sizing: border-box;
   margin: 0;
+  width: 30%;
 }
 
 .slider {
@@ -43,16 +44,36 @@
   background-color: var(--slider-thumb-color, #e3068c);
   box-shadow: 0px 0px 2px 0px #00000040;
   border-radius: 100px;
-  border: 0;
+  border: 1px solid white;
   position: absolute;
-  left: var(--slider-thumb-left);
   cursor: pointer;
+  touch-action: none;
+  left: calc(var(--slider-thumb-position) - var(--slider-thumb-size, 24px) / 2);
+}
+
+.thumb:focus {
+  border: 2px solid black;
 }
 
 .progress {
   position: absolute;
   height: 5px;
-  left: 0;
-  right: calc(100% - var(--slider-thumb-left));
+  left: var(--slider-progress-start);
+  right: calc(100% - var(--slider-progress-end));
   background-color: var(--slider-progress-color, #e3068c);
+}
+
+.steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.step {
+  width: 2px;
+  height: 6px;
+  border-radius: 10px;
+  background-color: var(--slider-step-color, #d9d9d9);
+  padding: 0;
+  border: 0;
 }
