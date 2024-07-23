@@ -1,6 +1,23 @@
-import { Component, Element, h, Prop, State, Watch } from '@stencil/core/internal';
+import {
+  Component,
+  Element,
+  Event,
+  EventEmitter,
+  h,
+  Prop,
+  State,
+  Watch,
+} from '@stencil/core/internal';
 import { debounce } from '../../utils/debounce';
 import { convertRange } from '../../utils/convertRange';
+
+const DEFAULT_INCREMENT_VALUE = 1;
+const DEFAULT_FAST_INCREMENT_VALUE = 5;
+const SLIDER_CSS_VARIABLES = {
+  THUMB_POSITION: '--slider-thumb-position',
+  PROGRESS_START: '--slider-progress-start',
+  PROGRESS_END: '--slider-progress-end',
+};
 
 @Component({
   tag: 'dojo-slider',
@@ -9,25 +26,37 @@ import { convertRange } from '../../utils/convertRange';
 })
 export class SliderComponent {
   @Prop() type: 'default' | 'range' = 'default';
-  @Prop() boundaries: { min: number; max: number } = { min: 0, max: 100 };
+  @Prop() boundaries?: { min: number; max: number };
   @Prop() defaultValues: [number, number];
   @Prop() thumbSize: number = 24;
   @Prop() valueSuffix: string = '';
   @Prop() includeSteps: boolean = false;
   @Prop() isVertical: boolean = false;
-  @State() value = [];
+  @Prop() incrementValue = DEFAULT_INCREMENT_VALUE;
+  @Prop() fastIncrementValue = DEFAULT_FAST_INCREMENT_VALUE;
+  @Prop() labels: { min: string; max: string; step?: string };
+
+  @State() value: number[] = [];
+
+  @Event() valueChange: EventEmitter<number[]>;
+
   @Element() el: HTMLElement;
   sliderRef!: HTMLElement;
   thumbRefs: HTMLElement[] = [];
+  innerBoundaries = { min: 0, max: 100 };
 
   componentWillLoad() {
+    this.innerBoundaries = { ...this.innerBoundaries, ...(this.boundaries ?? {}) };
     // Init slider
     this.value = [
       Math.max(
-        this.defaultValues?.[0] ?? this.boundaries.min ?? 0,
-        this.boundaries.min ?? 0,
+        this.defaultValues?.[0] ?? this.innerBoundaries.min ?? 0,
+        this.innerBoundaries.min ?? 0,
       ),
-      Math.min(this.defaultValues?.[1] ?? this.boundaries.max, this.boundaries.max),
+      Math.min(
+        this.defaultValues?.[1] ?? this.innerBoundaries.max,
+        this.innerBoundaries.max,
+      ),
     ];
   }
 
@@ -42,6 +71,7 @@ export class SliderComponent {
     // Re-set css variables on change
     this.setThumbPositions(newValues);
     this.setProgress(newValues);
+    this.valueChange.emit(newValues);
   }
 
   setElementProperty(element: HTMLElement | Element, key: string, value: string) {
@@ -51,7 +81,7 @@ export class SliderComponent {
   getBoundedValueInPercentage(value: number) {
     return convertRange(
       value,
-      [this.boundaries.min ?? 0, this.boundaries.max ?? 100],
+      [this.innerBoundaries.min ?? 0, this.innerBoundaries.max ?? 100],
       [0, 100],
     );
   }
@@ -60,7 +90,7 @@ export class SliderComponent {
     return convertRange(
       value,
       [0, 100],
-      [this.boundaries.min ?? 0, this.boundaries.max ?? 100],
+      [this.innerBoundaries.min ?? 0, this.innerBoundaries.max ?? 100],
     );
   }
 
@@ -71,8 +101,8 @@ export class SliderComponent {
       if (!this.thumbRefs[index]) return;
       this.setElementProperty(
         this.thumbRefs[index],
-        '--slider-thumb-position',
-        this.getBoundedValueInPercentage(value) + '%',
+        SLIDER_CSS_VARIABLES.THUMB_POSITION,
+        `${this.getBoundedValueInPercentage(value)}%`,
       );
     });
   }
@@ -81,13 +111,13 @@ export class SliderComponent {
     if (!this.sliderRef) return;
     this.setElementProperty(
       this.sliderRef,
-      '--slider-progress-start',
-      this.getBoundedValueInPercentage(values[0]) + '%',
+      SLIDER_CSS_VARIABLES.PROGRESS_START,
+      `${this.getBoundedValueInPercentage(values[0])}%`,
     );
     this.setElementProperty(
       this.sliderRef,
-      '--slider-progress-end',
-      this.getBoundedValueInPercentage(values[1]) + '%',
+      SLIDER_CSS_VARIABLES.PROGRESS_END,
+      `${this.getBoundedValueInPercentage(values[1])}%`,
     );
   }
 
@@ -95,14 +125,14 @@ export class SliderComponent {
     if (index === 1 && this.type === 'range') {
       return this.value[0] + 1;
     }
-    return this.boundaries.min ?? 0;
+    return this.innerBoundaries.min ?? 0;
   }
 
   getMaxThumbValue(index: number) {
     if (index === 0 && this.type === 'range') {
       return this.value[1] - 1;
     }
-    return this.boundaries.max ?? 100;
+    return this.innerBoundaries.max ?? 100;
   }
 
   getBoundedThumbValue(value: number, index: number) {
@@ -115,11 +145,11 @@ export class SliderComponent {
     if (index === 1 && newValue <= otherThumbValue && this.type === 'range') {
       newValue = otherThumbValue + 1;
     }
-    if (newValue > this.boundaries.max) {
-      return this.boundaries.max;
+    if (newValue > this.innerBoundaries.max) {
+      return this.innerBoundaries.max;
     }
-    if (newValue < this.boundaries.min) {
-      return this.boundaries.min;
+    if (newValue < this.innerBoundaries.min) {
+      return this.innerBoundaries.min;
     }
     return newValue;
   }
@@ -127,6 +157,9 @@ export class SliderComponent {
   setNewValueWithinBounds(value: number, index: number) {
     // Extra overflow / overlap checks
     const newValue = this.getBoundedThumbValue(value, index);
+    if (this.value[index] === newValue) {
+      return;
+    }
     // Map the value to trigger re-render
     this.value = this.value.map((val, locationIndex) => {
       if (index === locationIndex) {
@@ -137,17 +170,29 @@ export class SliderComponent {
   }
 
   handleThumbDrag = debounce((_, index: number) => {
-    const sliderRight = this.sliderRef.offsetLeft + this.sliderRef.offsetWidth;
+    // Handle y axis instead on vertical sliders
+    const sliderStart = this.isVertical
+      ? this.sliderRef.offsetTop
+      : this.sliderRef.offsetLeft;
+    const sliderSize = this.isVertical
+      ? this.sliderRef.offsetHeight
+      : this.sliderRef.offsetWidth;
+    const sliderFarEdge = sliderStart + sliderSize;
+
     const onPointerMove = (e: MouseEvent) => {
+      const pointerPosition = this.isVertical ? e.pageY : e.pageX;
       // Get pointer position inside slider
-      const thumbRelativePosition =
-        1 - (sliderRight - e.pageX) / this.sliderRef.offsetWidth;
+      const thumbRelativePosition = (sliderFarEdge - pointerPosition) / sliderSize;
+      const orderedThumbRelativePosition = this.isVertical
+        ? thumbRelativePosition
+        : 1 - thumbRelativePosition;
       // Convert position from 0-100 range to our arbitrarily bounded range
       const valueInBoundedRange = this.getValueInBoundedRangeFromPercentage(
-        100 * thumbRelativePosition,
+        100 * orderedThumbRelativePosition,
       );
       this.setNewValueWithinBounds(valueInBoundedRange, index);
     };
+
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener(
       'pointerup',
@@ -177,22 +222,22 @@ export class SliderComponent {
     let newValue = this.value[index];
     switch (e.key) {
       case 'ArrowRight':
-        newValue += 1;
+        newValue += this.incrementValue;
         break;
       case 'ArrowUp':
-        newValue += this.isVertical ? -1 : 1;
+        newValue += this.incrementValue;
         break;
       case 'ArrowLeft':
-        newValue -= 1;
+        newValue -= this.incrementValue;
         break;
       case 'ArrowDown':
-        newValue += this.isVertical ? 1 : -1;
+        newValue -= this.incrementValue;
         break;
       case 'PageUp':
-        newValue += this.isVertical ? -5 : 5;
+        newValue += this.fastIncrementValue;
         break;
       case 'PageDown':
-        newValue += this.isVertical ? 5 : -5;
+        newValue -= this.fastIncrementValue;
         break;
       case 'Home':
         newValue = this.getMinThumbValue(index);
@@ -200,25 +245,33 @@ export class SliderComponent {
       case 'End':
         newValue = this.getMaxThumbValue(index);
         break;
+      default:
+        return;
     }
     this.setNewValueWithinBounds(newValue, index);
   }
 
   render() {
     return (
-      <div class="wrapper" role="group">
+      <div class={{ 'wrapper': true, 'wrapper--vertical': this.isVertical }} role="group">
         <div class="inputs">
           {this.value.map((_, inputIndex) => {
-            if (this.type !== 'range' && inputIndex === 0) return null;
+            // Reverse inputs on vertical slider, can't reverse via styling as that would cause confusion in screen readers
+            let index = inputIndex;
+            if (this.isVertical) {
+              index = inputIndex === 0 ? 1 : 0;
+            }
+            if (this.type !== 'range' && index === 0) return null;
 
             return (
               <input
                 class="input"
                 type="text"
-                onChange={e => this.handleInputChange(e, inputIndex)}
-                value={`${this.value[inputIndex]}${
+                onChange={e => this.handleInputChange(e, index)}
+                value={`${this.value[index]}${
                   this.valueSuffix ? ' ' + this.valueSuffix : ''
                 }`}
+                aria-label={index === 0 ? this.labels?.min : this.labels?.max}
               />
             );
           })}
@@ -238,19 +291,29 @@ export class SliderComponent {
                 onPointerDown={e => this.handleThumbDrag(e, thumbIndex)}
                 onKeyDown={e => this.handleKeyDown(e, thumbIndex)}
                 ref={ref => (this.thumbRefs[thumbIndex] = ref)}
-                data-slider-thumb-index={thumbIndex}
                 aria-valuenow={this.value[thumbIndex]}
                 aria-valuemin={this.getMinThumbValue(thumbIndex)}
                 aria-valuemax={this.getMaxThumbValue(thumbIndex)}
+                aria-label={thumbIndex === 0 ? this.labels?.min : this.labels?.max}
+                aria-orientation={this.isVertical ? 'vertical' : undefined}
               ></button>
             );
           })}
         </div>
         <div class="steps">
           {this.includeSteps &&
-            Array.from(Array(11).keys()).map(step => (
-              <button class="step" onClick={() => this.handleStep(step)}></button>
-            ))}
+            Array.from(Array(11).keys()).map((_, index, arr) => {
+              const step = this.isVertical ? arr.at(-1 - index) : arr.at(index);
+              return (
+                <button
+                  class="step"
+                  onClick={() => this.handleStep(step)}
+                  aria-label={`Set ${
+                    this.labels?.step
+                  } to ${this.getValueInBoundedRangeFromPercentage(step * 10)}`}
+                ></button>
+              );
+            })}
         </div>
       </div>
     );

@@ -19,12 +19,28 @@
       <dojo-slider value-suffix="%"></dojo-slider>
       <dojo-slider include-steps="true"></dojo-slider>
       <dojo-slider include-steps="true" is-vertical="true"></dojo-slider>
+      <dojo-slider
+        id="last-vertical-slider"
+        include-steps="true"
+        is-vertical="true"
+        type="range"
+      ></dojo-slider>
     </dojo-card>
     <script>
       document.getElementById('first-slider').boundaries = { max: 150 };
       document.getElementById('second-slider').boundaries = { min: 15, max: 100 };
       document.getElementById('third-slider').boundaries = { min: 15, max: 100 };
       document.getElementById('third-slider').defaultValues = [30, 75];
+      document
+        .getElementById('last-vertical-slider')
+        .addEventListener('valueChange', val => console.log('Value changed', val));
+      Array.from(document.getElementsByTagName('dojo-slider')).forEach(item => {
+        item.labels = {
+          min: 'Minimum value',
+          max: 'Maximum value',
+          step: 'value',
+        };
+      });
     </script>
   </body>
 </html>
