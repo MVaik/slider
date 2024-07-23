@@ -280,21 +280,25 @@ export class SliderComponent {
           <div class="line"></div>
           <span class="progress"></span>
           {this.value.map((_, thumbIndex) => {
+            let index = thumbIndex;
+            if (this.isVertical) {
+              index = thumbIndex === 0 ? 1 : 0;
+            }
             // First thumb is only rendered for ranges
-            if (this.type !== 'range' && thumbIndex === 0) return null;
+            if (this.type !== 'range' && index === 0) return null;
 
             return (
               <button
-                key={thumbIndex}
+                key={index}
                 class="thumb"
                 role="slider"
-                onPointerDown={e => this.handleThumbDrag(e, thumbIndex)}
-                onKeyDown={e => this.handleKeyDown(e, thumbIndex)}
-                ref={ref => (this.thumbRefs[thumbIndex] = ref)}
-                aria-valuenow={this.value[thumbIndex]}
-                aria-valuemin={this.getMinThumbValue(thumbIndex)}
-                aria-valuemax={this.getMaxThumbValue(thumbIndex)}
-                aria-label={thumbIndex === 0 ? this.labels?.min : this.labels?.max}
+                onPointerDown={e => this.handleThumbDrag(e, index)}
+                onKeyDown={e => this.handleKeyDown(e, index)}
+                ref={ref => (this.thumbRefs[index] = ref)}
+                aria-valuenow={this.value[index]}
+                aria-valuemin={this.getMinThumbValue(index)}
+                aria-valuemax={this.getMaxThumbValue(index)}
+                aria-label={index === 0 ? this.labels?.min : this.labels?.max}
                 aria-orientation={this.isVertical ? 'vertical' : undefined}
               ></button>
             );
@@ -310,7 +314,9 @@ export class SliderComponent {
                   onClick={() => this.handleStep(step)}
                   aria-label={`Set ${
                     this.labels?.step
-                  } to ${this.getValueInBoundedRangeFromPercentage(step * 10)}`}
+                  } to ${this.getValueInBoundedRangeFromPercentage(step * 10)} ${
+                    this.valueSuffix
+                  }`}
                 ></button>
               );
             })}

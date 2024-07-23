@@ -38,6 +38,11 @@
   & .steps {
     flex-direction: column;
   }
+
+  & .step {
+    width: 6px;
+    height: 2px;
+  }
 }
 
 .inputs {
