@@ -251,6 +251,28 @@ export class SliderComponent {
     this.setNewValueWithinBounds(newValue, index);
   }
 
+  handleSliderClick(e: MouseEvent) {
+    const sliderStart = this.isVertical
+      ? this.sliderRef.offsetTop
+      : this.sliderRef.offsetLeft;
+    const sliderSize = this.isVertical
+      ? this.sliderRef.offsetHeight
+      : this.sliderRef.offsetWidth;
+    const sliderFarEdge = sliderStart + sliderSize;
+
+    const pointerPosition = this.isVertical ? e.pageY : e.pageX;
+    // Get pointer position inside slider
+    const thumbRelativePosition = (sliderFarEdge - pointerPosition) / sliderSize;
+    const orderedThumbRelativePosition = this.isVertical
+      ? thumbRelativePosition
+      : 1 - thumbRelativePosition;
+    // Convert position from 0-100 range to our arbitrarily bounded range
+    const valueInBoundedRange = this.getValueInBoundedRangeFromPercentage(
+      100 * orderedThumbRelativePosition,
+    );
+    this.setNewValueWithinBounds(valueInBoundedRange, 1);
+  }
+
   render() {
     return (
       <div class={{ 'wrapper': true, 'wrapper--vertical': this.isVertical }} role="group">
@@ -277,8 +299,8 @@ export class SliderComponent {
           })}
         </div>
         <div class="slider" ref={el => (this.sliderRef = el)}>
-          <div class="line"></div>
-          <span class="progress"></span>
+          <div class="line" onClick={e => this.handleSliderClick(e)}></div>
+          <span class="progress" onClick={e => this.handleSliderClick(e)}></span>
           {this.value.map((_, thumbIndex) => {
             let index = thumbIndex;
             if (this.isVertical) {
